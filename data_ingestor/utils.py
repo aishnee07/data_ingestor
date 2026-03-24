@@ -1,4 +1,4 @@
-from ingestors import CSVIngestor, JSONIngestor, ParquetIngestor 
+from ingestors import FileIngestor ,CSVIngestor, JSONIngestor, ParquetIngestor 
 
 
 # factory function - a function that creates and returns new objects or values, abstracting the creation logic away from the client code. Instead of using a direct constructor call (e.g., calling a class with ()), the client calls the factory function, which then determines which specific type of object to create based on certain conditions or inputs.
