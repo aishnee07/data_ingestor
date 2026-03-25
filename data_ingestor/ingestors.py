@@ -1,6 +1,8 @@
 import pandas as pd
 from abc import ABC, abstractmethod
 from decorators import timer, validate_dataframe
+from contextlib import contextmanager
+from pathlib import Path
 
 # class to ingest data from files
 class FileIngestor(ABC):
@@ -53,5 +55,32 @@ class ParquetIngestor(FileIngestor):
         df = pd.read_parquet(self.filepath)
         return df
 
-# ingestor = FileIngestor("data.csv", "csv")  # Python considers FileIngestor to be an incomplete blueprint due to the abstract method read(), and thus raises a TypeError when you try to instantiate it.
+
+@contextmanager
+def managed_ingestor(filepath):
+	from utils import get_ingestor
+	ingestor = get_ingestor(filepath)
+	print(f"Starting ingestion for {filepath}")
+	try:
+		yield ingestor
+	except Exception as e:
+		print(f"Ingestion failed: {e}")
+		raise   # re-raise it so it propagates
+	finally:
+		print(f"Ingestion complete for {filepath}")
+		
+
+if __name__ == "__main__":
+	# Dynamically locate data.csv relative to this script's directory
+	script_dir = Path(__file__).parent
+	data_file = script_dir / "data.csv"
+	
+	if not data_file.exists():
+		print(f"Error: data.csv not found at {data_file}")
+		print(f"Script location: {script_dir}")
+		exit(1)
+	
+	with managed_ingestor(str(data_file)) as ingestor:
+		df = ingestor.read()
+
 
