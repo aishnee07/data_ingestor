@@ -1,13 +1,21 @@
-# factory function - a function that creates and returns new objects or values, abstracting the creation logic away from the client code. Instead of using a direct constructor call (e.g., calling a class with ()), the client calls the factory function, which then determines which specific type of object to create based on certain conditions or inputs.
+from .factory import get_ingestor
+from .context import managed_ingestor
+from pathlib import Path
 
-def get_ingestor(filepath: str):
-	from ingestors import CSVIngestor, JSONIngestor, ParquetIngestor
-	if filepath.endswith(".csv"):
-		return CSVIngestor(filepath, "csv")
-	elif filepath.endswith(".json"):
-		return JSONIngestor(filepath, "json")
-	elif filepath.endswith(".parquet"):
-		return ParquetIngestor(filepath, "parquet")
-	else:
-		raise ValueError(f"Unsupported file format for file: {filepath}")
 
+
+def read_multiple_files(filepaths: list):
+	for filepath in filepaths:
+		#yield from read_in_chunks(filepath)   - can't call a method like this, it is not a normal function
+		ingestor = get_ingestor(filepath)
+		yield from ingestor.read_in_chunks()
+
+def scan_and_ingest(folder: str):
+	dfs = []
+	extensions = {'.csv', '.json', '.parquet'}
+	filepaths = [str(p) for p in Path(folder).rglob("*") if p.suffix.lower() in extensions]
+	for path in filepaths:
+		with managed_ingestor(path) as ingestor:
+			ingested_data = ingestor.read()
+			dfs.append(ingested_data)
+	return dfs
